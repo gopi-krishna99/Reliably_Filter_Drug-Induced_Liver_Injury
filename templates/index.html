@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Reliably Filter Drug-Induced Liver Injury</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <style>
+        .result-card {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 1rem;
+            background-color: #f8f9fa;
+            min-width: 250px;
+        }
+        .result-card p {
+            margin: 0;
+        }
+        .safe {
+            color: #38a169;
+        }
+        .unsafe {
+            color: #e53e3e;
+        }
+        .results-container {
+            max-height: 60vh;
+            overflow-y: auto;
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+    </style>
+</head>
+<body class="bg-gray-100 flex items-center justify-center min-h-screen">
+    <div class="w-full max-w-6xl p-8 bg-white shadow-md rounded-lg">
+        <h1 class="text-2xl font-bold mb-6 text-gray-800">Reliably Filter Drug-Induced Liver Injury</h1>
+
+        <!-- File upload form -->
+        <form id="upload-form" enctype="multipart/form-data" class="mb-6">
+            <input type="file" id="file" name="file" class="mb-4 p-2 border border-gray-300 rounded w-full" required>
+            <button type="submit" class="bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600">Upload and Predict</button>
+        </form>
+
+        <!-- Drug search form -->
+        <form id="drug-search-form" class="mb-6">
+            <input type="text" id="drug1" name="drug1" placeholder="Enter Drug 1" class="mb-4 p-2 border border-gray-300 rounded w-full" required>
+            <input type="text" id="drug2" name="drug2" placeholder="Enter Drug 2" class="mb-4 p-2 border border-gray-300 rounded w-full" required>
+            <input type="number" id="dose1" name="dose1" placeholder="Enter Dose 1" class="mb-4 p-2 border border-gray-300 rounded w-full" required>
+            <input type="number" id="dose2" name="dose2" placeholder="Enter Dose 2" class="mb-4 p-2 border border-gray-300 rounded w-full" required>
+            <button type="submit" class="bg-green-500 text-white py-2 px-4 rounded hover:bg-green-600">Search and Predict</button>
+        </form>
+
+        <div id="result" class="results-container mt-6 flex gap-6 flex-wrap">
+            <!-- Results will be injected here -->
+        </div>
+    </div>
+
+    <script>
+        // File upload handling
+        document.getElementById('upload-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const formData = new FormData();
+            formData.append('file', document.getElementById('file').files[0]);
+
+            try {
+                const response = await fetch('/upload', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                const resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+
+                if (result.error) {
+                    resultContainer.innerHTML = `<div class="bg-red-100 text-red-800 p-4 rounded">${result.error}</div>`;
+                } else {
+                    result.forEach(item => {
+                        const resultCard = document.createElement('div');
+                        resultCard.className = 'result-card';
+                        resultCard.innerHTML = `
+                            <p><strong>Drug 1:</strong> ${item.Drug1}</p>
+                            <p><strong>Drug 2:</strong> ${item.Drug2}</p>
+                            <p><strong>Probability:</strong> ${item.Probability.toFixed(2)}</p>
+                            <p class="${item.Prediction === 'Do not use' ? 'unsafe' : 'safe'}"><strong>Status:</strong> ${item.Prediction}</p>
+                        `;
+                        resultContainer.appendChild(resultCard);
+                    });
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<div class="bg-red-100 text-red-800 p-4 rounded">Error: ${error.message}</div>`;
+            }
+        });
+
+        // Drug search handling
+        document.getElementById('drug-search-form').addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const drug1 = document.getElementById('drug1').value;
+            const drug2 = document.getElementById('drug2').value;
+            const dose1 = document.getElementById('dose1').value;
+            const dose2 = document.getElementById('dose2').value;
+
+            const formData = new FormData();
+            formData.append('drug1', drug1);
+            formData.append('drug2', drug2);
+            formData.append('dose1', dose1);
+            formData.append('dose2', dose2);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    body: formData
+                });
+                const result = await response.json();
+
+                const resultContainer = document.getElementById('result');
+                resultContainer.innerHTML = '';
+
+                if (result.error) {
+                    resultContainer.innerHTML = `<div class="bg-red-100 text-red-800 p-4 rounded">${result.error}</div>`;
+                } else {
+                    result.forEach(item => {
+                        const resultCard = document.createElement('div');
+                        resultCard.className = 'result-card';
+                        resultCard.innerHTML = `
+                            <p><strong>Drug 1:</strong> ${item.Drug1}</p>
+                            <p><strong>Drug 2:</strong> ${item.Drug2}</p>
+                            <p><strong>Probability:</strong> ${item.Probability.toFixed(2)}</p>
+                            <p class="${item.Prediction === 'Do not use' ? 'unsafe' : 'safe'}"><strong>Status:</strong> ${item.Prediction}</p>
+                        `;
+                        resultContainer.appendChild(resultCard);
+                    });
+                }
+            } catch (error) {
+                document.getElementById('result').innerHTML = `<div class="bg-red-100 text-red-800 p-4 rounded">Error: ${error.message}</div>`;
+            }
+        });
+    </script>
+</body>
+</html>
